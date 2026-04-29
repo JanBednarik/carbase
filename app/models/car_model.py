@@ -1,10 +1,11 @@
 import enum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from app.models.brand import Brand
+    from app.models.used_car import UsedCar
 
 
 class BodyStyle(str, enum.Enum):
@@ -32,6 +33,7 @@ class CarModel(CarModelBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     brand_id: int = Field(foreign_key="brand.id")
     brand: Optional["Brand"] = Relationship(back_populates="cars")
+    used_cars: List["UsedCar"] = Relationship(back_populates="car_model")
 
 
 class CarModelCreate(CarModelBase):

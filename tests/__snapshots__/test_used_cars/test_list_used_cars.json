@@ -1,0 +1,22 @@
+[
+  {
+    "car_model_id": 1,
+    "fuel": "Petrol",
+    "id": 1,
+    "km_driven": 50000,
+    "name": "2019 Toyota Corolla",
+    "price": 15000.0,
+    "transmission": "Manual",
+    "year": 2019
+  },
+  {
+    "car_model_id": 1,
+    "fuel": "Petrol",
+    "id": 2,
+    "km_driven": 15000,
+    "name": "2021 Toyota Corolla",
+    "price": 22000.0,
+    "transmission": "Automatic",
+    "year": 2021
+  }
+]
