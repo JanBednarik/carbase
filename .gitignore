@@ -1,0 +1,29 @@
+# Claude
+CLAUDE.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Virtual environment
+.venv/
+
+# Environment
+.env
+
+# Coverage
+.coverage
+htmlcov/
+
+# pytest
+.pytest_cache/
+
+# Ruff
+.ruff_cache/
+
+# Editors
+.idea/
+.vscode/
+*.swp

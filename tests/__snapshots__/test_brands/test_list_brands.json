@@ -1,0 +1,14 @@
+[
+  {
+    "continent": "Asia",
+    "country": "Japan",
+    "id": 1,
+    "name": "Toyota"
+  },
+  {
+    "continent": "North America",
+    "country": "USA",
+    "id": 2,
+    "name": "Ford"
+  }
+]

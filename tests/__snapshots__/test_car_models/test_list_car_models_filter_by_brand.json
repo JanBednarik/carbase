@@ -1,0 +1,11 @@
+[
+  {
+    "body_style": "sedan",
+    "brand_id": 1,
+    "doors": 4,
+    "id": 1,
+    "name": "Corolla",
+    "year_from": 1966,
+    "year_to": 2022
+  }
+]
