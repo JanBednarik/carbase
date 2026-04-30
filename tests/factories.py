@@ -1,9 +1,19 @@
 import factory
 from factory.alchemy import SQLAlchemyModelFactory
 
+from app.models.api_token import ApiToken
 from app.models.brand import Brand, Continent
 from app.models.car_model import BodyStyle, CarModel
 from app.models.used_car import Fuel, Transmission, UsedCar
+
+
+class ApiTokenFactory(SQLAlchemyModelFactory):
+    class Meta:
+        model = ApiToken
+        sqlalchemy_session_persistence = "commit"
+
+    name = factory.Sequence(lambda n: f"Token {n}")
+    scopes = factory.LazyFunction(list)
 
 
 class BrandFactory(SQLAlchemyModelFactory):

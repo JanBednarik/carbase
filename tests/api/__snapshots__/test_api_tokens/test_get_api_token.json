@@ -1,0 +1,8 @@
+{
+  "expires_at": "2027-12-31",
+  "id": 2,
+  "name": "Target Token",
+  "scopes": [
+    "api_token_write"
+  ]
+}

@@ -9,7 +9,12 @@ from syrupy.extensions.json import JSONSnapshotExtension
 
 from app.database import get_session
 from app.main import app
-from tests.factories import BrandFactory, CarModelFactory, UsedCarFactory
+from tests.factories import (
+    ApiTokenFactory,
+    BrandFactory,
+    CarModelFactory,
+    UsedCarFactory,
+)
 
 load_dotenv()
 
@@ -27,6 +32,7 @@ def session_fixture():
 
 @pytest.fixture(autouse=True)
 def factory_session(session: Session):
+    ApiTokenFactory._meta.sqlalchemy_session = session
     BrandFactory._meta.sqlalchemy_session = session
     CarModelFactory._meta.sqlalchemy_session = session
     UsedCarFactory._meta.sqlalchemy_session = session

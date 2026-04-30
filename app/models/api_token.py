@@ -25,6 +25,22 @@ class ApiToken(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True)
-    token: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
+    token: str = Field(default_factory=lambda: secrets.token_urlsafe(32), index=True)
     expires_at: Optional[date] = Field(default_factory=_default_expires_at)
     scopes: List[Scope] = Field(default=[], sa_column=Column(sa.ARRAY(sa.String)))
+
+
+class ApiTokenCreate(SQLModel):
+    name: str
+    scopes: List[Scope] = []
+
+
+class ApiTokenRead(SQLModel):
+    id: int
+    name: str
+    expires_at: Optional[date]
+    scopes: List[Scope]
+
+
+class ApiTokenCreated(ApiTokenRead):
+    token: str
