@@ -35,7 +35,7 @@ def test_create_used_car(client: TestClient, session: Session):
     assert used_car.transmission == Transmission.manual
 
 
-def test_create_used_car_unknown_model(client: TestClient):
+def test_create_used_car__unknown_model(client: TestClient):
     response = client.post(
         "/cars/",
         json={
@@ -77,7 +77,7 @@ def test_list_used_cars(client: TestClient, snapshot_json: SnapshotAssertion):
     assert response.json() == snapshot_json
 
 
-def test_list_used_cars_filter_by_model(
+def test_list_used_cars__filter_by_model(
     client: TestClient, snapshot_json: SnapshotAssertion
 ):
     corolla = CarModelFactory()
@@ -121,7 +121,7 @@ def test_get_used_car(client: TestClient, snapshot_json: SnapshotAssertion):
     assert response.json() == snapshot_json
 
 
-def test_get_used_car_not_found(client: TestClient):
+def test_get_used_car__not_found(client: TestClient):
     response = client.get("/cars/999")
     assert response.status_code == 404
 
@@ -148,12 +148,12 @@ def test_update_used_car(
     assert updated.name == used_car.name
 
 
-def test_update_used_car_not_found(client: TestClient):
+def test_update_used_car__not_found(client: TestClient):
     response = client.patch("/cars/999", json={"price": 13500.0})
     assert response.status_code == 404
 
 
-def test_update_used_car_unknown_model(client: TestClient):
+def test_update_used_car__unknown_model(client: TestClient):
     used_car = UsedCarFactory()
 
     response = client.patch(f"/cars/{used_car.id}", json={"car_model_id": 999})
@@ -170,6 +170,6 @@ def test_delete_used_car(client: TestClient, session: Session):
     assert session.get(UsedCar, used_car.id) is None
 
 
-def test_delete_used_car_not_found(client: TestClient):
+def test_delete_used_car__not_found(client: TestClient):
     response = client.delete("/cars/999")
     assert response.status_code == 404

@@ -38,7 +38,7 @@ def test_get_brand(client: TestClient, snapshot_json: SnapshotAssertion):
     assert response.json() == snapshot_json
 
 
-def test_get_brand_not_found(client: TestClient):
+def test_get_brand__not_found(client: TestClient):
     response = client.get("/brands/999")
     assert response.status_code == 404
 
@@ -58,7 +58,7 @@ def test_update_brand(
     assert updated.name == brand.name
 
 
-def test_update_brand_not_found(client: TestClient):
+def test_update_brand__not_found(client: TestClient):
     response = client.patch("/brands/999", json={"country": "JP"})
     assert response.status_code == 404
 
@@ -73,6 +73,6 @@ def test_delete_brand(client: TestClient, session: Session):
     assert session.get(Brand, brand.id) is None
 
 
-def test_delete_brand_not_found(client: TestClient):
+def test_delete_brand__not_found(client: TestClient):
     response = client.delete("/brands/999")
     assert response.status_code == 404

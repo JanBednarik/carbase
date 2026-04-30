@@ -5,13 +5,13 @@ from app.models.used_car import Fuel, Transmission
 from tests.factories import UsedCarFactory
 
 
-def test_recommend_empty(client: TestClient):
+def test_recommend__empty(client: TestClient):
     response = client.post("/recommend/", json={"attributes": []})
     assert response.status_code == 200
     assert response.json() == []
 
 
-def test_recommend_returns_used_cars(
+def test_recommend__returns_used_cars(
     client: TestClient, snapshot_json: SnapshotAssertion
 ):
     UsedCarFactory(
@@ -31,7 +31,7 @@ def test_recommend_returns_used_cars(
     assert response.json() == snapshot_json
 
 
-def test_recommend_invalid_weight(client: TestClient):
+def test_recommend__invalid_weight(client: TestClient):
     response = client.post(
         "/recommend/",
         json={"attributes": [{"name": "fuel", "value": "Petrol", "weight": 1.5}]},

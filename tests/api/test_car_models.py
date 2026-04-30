@@ -32,7 +32,7 @@ def test_create_car_model(client: TestClient, session: Session):
     assert car.year_to == 2022
 
 
-def test_create_car_model_unknown_brand(client: TestClient):
+def test_create_car_model__unknown_brand(client: TestClient):
     response = client.post(
         "/models/",
         json={
@@ -71,7 +71,7 @@ def test_list_car_models(client: TestClient, snapshot_json: SnapshotAssertion):
     assert response.json() == snapshot_json
 
 
-def test_list_car_models_filter_by_brand(
+def test_list_car_models__filter_by_brand(
     client: TestClient, snapshot_json: SnapshotAssertion
 ):
     toyota = BrandFactory(name="Toyota", country="Japan", continent=Continent.asia)
@@ -112,7 +112,7 @@ def test_get_car_model(client: TestClient, snapshot_json: SnapshotAssertion):
     assert response.json() == snapshot_json
 
 
-def test_get_car_model_not_found(client: TestClient):
+def test_get_car_model__not_found(client: TestClient):
     response = client.get("/models/999")
     assert response.status_code == 404
 
@@ -138,12 +138,12 @@ def test_update_car_model(
     assert updated.name == car.name
 
 
-def test_update_car_model_not_found(client: TestClient):
+def test_update_car_model__not_found(client: TestClient):
     response = client.patch("/models/999", json={"year_to": 2023})
     assert response.status_code == 404
 
 
-def test_update_car_model_unknown_brand(client: TestClient):
+def test_update_car_model__unknown_brand(client: TestClient):
     car = CarModelFactory()
 
     response = client.patch(f"/models/{car.id}", json={"brand_id": 999})
@@ -160,6 +160,6 @@ def test_delete_car_model(client: TestClient, session: Session):
     assert session.get(CarModel, car.id) is None
 
 
-def test_delete_car_model_not_found(client: TestClient):
+def test_delete_car_model__not_found(client: TestClient):
     response = client.delete("/models/999")
     assert response.status_code == 404
