@@ -2,13 +2,20 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 from syrupy.assertion import SnapshotAssertion
 
+from app.models.api_token import ApiToken, Scope
 from app.models.brand import Continent
 from app.models.car_model import BodyStyle, CarModel
-from tests.factories import BrandFactory, CarModelFactory
+from tests.factories import ApiTokenFactory, BrandFactory, CarModelFactory
+
+
+def _auth(token: ApiToken) -> dict:
+    return {"Authorization": f"Bearer {token.token}"}
 
 
 def test_create_car_model(client: TestClient, session: Session):
+    auth = ApiTokenFactory(scopes=[Scope.car_model_write])
     brand = BrandFactory()
+
     response = client.post(
         "/models/",
         json={
@@ -19,7 +26,9 @@ def test_create_car_model(client: TestClient, session: Session):
             "doors": 4,
             "body_style": "sedan",
         },
+        headers=_auth(auth),
     )
+
     assert response.status_code == 201
     car_id = response.json()["id"]
 
@@ -33,6 +42,8 @@ def test_create_car_model(client: TestClient, session: Session):
 
 
 def test_create_car_model__unknown_brand(client: TestClient):
+    auth = ApiTokenFactory(scopes=[Scope.car_model_write])
+
     response = client.post(
         "/models/",
         json={
@@ -43,8 +54,43 @@ def test_create_car_model__unknown_brand(client: TestClient):
             "doors": 4,
             "body_style": "sedan",
         },
+        headers=_auth(auth),
     )
     assert response.status_code == 404
+
+
+def test_create_car_model__no_auth(client: TestClient):
+    brand = BrandFactory()
+    response = client.post(
+        "/models/",
+        json={
+            "name": "Corolla",
+            "brand_id": brand.id,
+            "year_from": 1966,
+            "year_to": 2022,
+            "doors": 4,
+            "body_style": "sedan",
+        },
+    )
+    assert response.status_code == 401
+
+
+def test_create_car_model__insufficient_scope(client: TestClient):
+    auth = ApiTokenFactory(scopes=[Scope.api_token_read])
+    brand = BrandFactory()
+    response = client.post(
+        "/models/",
+        json={
+            "name": "Corolla",
+            "brand_id": brand.id,
+            "year_from": 1966,
+            "year_to": 2022,
+            "doors": 4,
+            "body_style": "sedan",
+        },
+        headers=_auth(auth),
+    )
+    assert response.status_code == 403
 
 
 def test_list_car_models(client: TestClient, snapshot_json: SnapshotAssertion):
@@ -120,6 +166,7 @@ def test_get_car_model__not_found(client: TestClient):
 def test_update_car_model(
     client: TestClient, session: Session, snapshot_json: SnapshotAssertion
 ):
+    auth = ApiTokenFactory(scopes=[Scope.car_model_write])
     car = CarModelFactory(
         name="Corolla",
         year_from=1966,
@@ -128,7 +175,9 @@ def test_update_car_model(
         body_style=BodyStyle.sedan,
     )
 
-    response = client.patch(f"/models/{car.id}", json={"year_to": 2023})
+    response = client.patch(
+        f"/models/{car.id}", json={"year_to": 2023}, headers=_auth(auth)
+    )
     assert response.status_code == 200
     assert response.json() == snapshot_json
 
@@ -139,21 +188,40 @@ def test_update_car_model(
 
 
 def test_update_car_model__not_found(client: TestClient):
-    response = client.patch("/models/999", json={"year_to": 2023})
+    auth = ApiTokenFactory(scopes=[Scope.car_model_write])
+    response = client.patch("/models/999", json={"year_to": 2023}, headers=_auth(auth))
     assert response.status_code == 404
 
 
 def test_update_car_model__unknown_brand(client: TestClient):
+    auth = ApiTokenFactory(scopes=[Scope.car_model_write])
     car = CarModelFactory()
-
-    response = client.patch(f"/models/{car.id}", json={"brand_id": 999})
+    response = client.patch(
+        f"/models/{car.id}", json={"brand_id": 999}, headers=_auth(auth)
+    )
     assert response.status_code == 404
 
 
+def test_update_car_model__no_auth(client: TestClient):
+    car = CarModelFactory()
+    response = client.patch(f"/models/{car.id}", json={"year_to": 2023})
+    assert response.status_code == 401
+
+
+def test_update_car_model__insufficient_scope(client: TestClient):
+    auth = ApiTokenFactory(scopes=[Scope.api_token_read])
+    car = CarModelFactory()
+    response = client.patch(
+        f"/models/{car.id}", json={"year_to": 2023}, headers=_auth(auth)
+    )
+    assert response.status_code == 403
+
+
 def test_delete_car_model(client: TestClient, session: Session):
+    auth = ApiTokenFactory(scopes=[Scope.car_model_write])
     car = CarModelFactory()
 
-    response = client.delete(f"/models/{car.id}")
+    response = client.delete(f"/models/{car.id}", headers=_auth(auth))
     assert response.status_code == 204
 
     session.expire_all()
@@ -161,5 +229,19 @@ def test_delete_car_model(client: TestClient, session: Session):
 
 
 def test_delete_car_model__not_found(client: TestClient):
-    response = client.delete("/models/999")
+    auth = ApiTokenFactory(scopes=[Scope.car_model_write])
+    response = client.delete("/models/999", headers=_auth(auth))
     assert response.status_code == 404
+
+
+def test_delete_car_model__no_auth(client: TestClient):
+    car = CarModelFactory()
+    response = client.delete(f"/models/{car.id}")
+    assert response.status_code == 401
+
+
+def test_delete_car_model__insufficient_scope(client: TestClient):
+    auth = ApiTokenFactory(scopes=[Scope.api_token_read])
+    car = CarModelFactory()
+    response = client.delete(f"/models/{car.id}", headers=_auth(auth))
+    assert response.status_code == 403

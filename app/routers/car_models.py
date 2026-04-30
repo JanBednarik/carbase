@@ -3,13 +3,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
+from app.auth import require_scope
 from app.database import get_session
+from app.models.api_token import ApiToken, Scope
 from app.models.brand import Brand
 from app.models.car_model import CarModel, CarModelCreate, CarModelRead, CarModelUpdate
 
 router = APIRouter(prefix="/models", tags=["models"])
 
 SessionDep = Annotated[Session, Depends(get_session)]
+CarModelWriteDep = Annotated[ApiToken, Depends(require_scope(Scope.car_model_write))]
 
 
 @router.get("/", response_model=list[CarModelRead])
@@ -23,7 +26,7 @@ def list_car_models(
 
 
 @router.post("/", response_model=CarModelRead, status_code=201)
-def create_car_model(car: CarModelCreate, session: SessionDep):
+def create_car_model(car: CarModelCreate, session: SessionDep, _: CarModelWriteDep):
     if not session.get(Brand, car.brand_id):
         raise HTTPException(status_code=404, detail="Brand not found")
     db_car = CarModel.model_validate(car)
@@ -42,7 +45,9 @@ def get_car_model(model_id: int, session: SessionDep):
 
 
 @router.patch("/{model_id}", response_model=CarModelRead)
-def update_car_model(model_id: int, car_update: CarModelUpdate, session: SessionDep):
+def update_car_model(
+    model_id: int, car_update: CarModelUpdate, session: SessionDep, _: CarModelWriteDep
+):
     car = session.get(CarModel, model_id)
     if not car:
         raise HTTPException(status_code=404, detail="Car not found")
@@ -57,7 +62,7 @@ def update_car_model(model_id: int, car_update: CarModelUpdate, session: Session
 
 
 @router.delete("/{model_id}", status_code=204)
-def delete_car_model(model_id: int, session: SessionDep):
+def delete_car_model(model_id: int, session: SessionDep, _: CarModelWriteDep):
     car = session.get(CarModel, model_id)
     if not car:
         raise HTTPException(status_code=404, detail="Car not found")
