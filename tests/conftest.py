@@ -21,13 +21,18 @@ load_dotenv()
 TEST_DATABASE_URL = os.environ["TEST_DATABASE_URL"]
 
 
-@pytest.fixture(name="session")
-def session_fixture():
+@pytest.fixture(name="engine")
+def engine_fixture():
     engine = create_engine(TEST_DATABASE_URL)
     SQLModel.metadata.create_all(engine)
+    yield engine
+    SQLModel.metadata.drop_all(engine)
+
+
+@pytest.fixture(name="session")
+def session_fixture(engine):
     with Session(engine) as session:
         yield session
-    SQLModel.metadata.drop_all(engine)
 
 
 @pytest.fixture(autouse=True)

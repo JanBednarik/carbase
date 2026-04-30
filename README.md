@@ -1,14 +1,16 @@
 # Car Base
 
-REST API service for a database of car models, brands, and used cars with a recommendation engine.
+REST API service for a database of car models, brands, and used cars
+with a recommendation engine.
 
-**Stack:** Python, FastAPI, SQLModel, PostgreSQL, Alembic, pytest, factory_boy, syrupy
-
-API docs are available at `http://127.0.0.1:8000/docs`.
+**Stack:** Python, FastAPI, SQLModel, Typer, PostgreSQL, Alembic, pytest
 
 ## API
 
-Write endpoints require a Bearer token in the `Authorization` header. The token must exist in the database with the appropriate scope.
+API docs are available at `http://127.0.0.1:8000/docs`.
+
+Write endpoints require a Bearer token in the `Authorization` header.
+The token must exist in the database with the appropriate scope.
 
 | Method | Route | Description | Required scope |
 |--------|-------|-------------|----------------|
@@ -46,9 +48,32 @@ The `/recommend/` endpoint accepts a list of weighted attributes:
 
 ### Authentication
 
-Tokens are created via `POST /api-tokens/`. The `token` value is returned only on creation — store it securely. Tokens expire after 65 days by default (configurable via `TOKEN_EXPIRATION_DAYS` in `.env`).
+Tokens are created via `POST /api-tokens/`. The `token` value is
+returned only on creation — store it securely. Tokens expire after
+65 days by default (configurable via `TOKEN_EXPIRATION_DAYS` in `.env`).
 
-Available scopes: `api_token_read`, `api_token_write`, `brand_write`, `car_model_write`, `used_car_write`.
+Available scopes: `api_token_read`, `api_token_write`, `brand_write`,
+`car_model_write`, `used_car_write`.
+
+## CLI
+
+Management commands are available via `python -m app.cli`:
+
+```bash
+# Create an API token (all scopes, default expiry)
+python -m app.cli create-token "My Token"
+
+# Create a token with specific scopes and expiry date
+python -m app.cli create-token "Deploy Bot" \
+  --scopes brand_write --scopes car_model_write \
+  --expires-at 2027-01-01
+
+# Delete all expired tokens
+python -m app.cli clean-expired-tokens
+```
+
+`create-token` prints the token value to stdout — store it securely,
+it cannot be retrieved later.
 
 ## Development
 
@@ -67,34 +92,43 @@ make run        # start dev server at http://127.0.0.1:8000
 
 ```bash
 make test           # run tests
-make coverage       # run tests with coverage report 
+make coverage       # run tests with coverage report
 ```
 
-Tests use [factory_boy](https://factoryboy.readthedocs.io) for generating model instances. Factories are in `tests/factories.py` and the session is wired in automatically via a `conftest.py` fixture.
+Tests use [factory_boy](https://factoryboy.readthedocs.io) for
+generating model instances. Factories are in `tests/factories.py` and
+the session is wired in automatically via a `conftest.py` fixture.
 
-Snapshot testing is done with [syrupy](https://github.com/syrupy-project/syrupy). To update snapshots after intentional response changes:
+Snapshot testing is done with
+[syrupy](https://github.com/syrupy-project/syrupy). To update snapshots
+after intentional response changes:
 
 ```bash
 make snapshot
 ```
 
-Tests require a PostgreSQL database. Set `TEST_DATABASE_URL` in `.env` before running:
+Tests require a PostgreSQL database. Set `TEST_DATABASE_URL` in `.env`
+before running:
 
 ```
 TEST_DATABASE_URL=postgresql://user:password@localhost:5432/carbase_test
 ```
 
-The schema is created and torn down automatically around each test session.
+The schema is created and torn down automatically around each test
+session.
 
 ### Pre-commit hooks
 
-[pre-commit](https://pre-commit.com) hooks run automatically on every `git commit`. They are installed as part of `make install` and run ruff (lint + fix) and ruff-format on staged files.
+[pre-commit](https://pre-commit.com) hooks run automatically on every
+`git commit`. They are installed as part of `make install` and run ruff
+(lint + fix) and ruff-format on staged files.
 
 To run them manually across the whole codebase: `make hooks`
 
 ### Code Quality
 
-We use Ruff for linting and code formatting. It's run automatically in pre-commit hooks. You can run it manually:
+We use Ruff for linting and code formatting. It's run automatically in
+pre-commit hooks. You can run it manually:
 
 ```bash
 make lint           # ruff check
@@ -104,17 +138,21 @@ make fmt            # ruff format
 ### Database migrations
 
 ```bash
-make migration m="describe the change"  # autogenerate migration from model changes
-make migrate                             # apply all pending migrations
+# autogenerate migration from model changes
+make migration m="describe the change"
+# apply all pending migrations
+make migrate
 ```
 
 ### Dependency management
 
-Dependencies are managed with [pip-tools](https://github.com/jazzband/pip-tools).
-Edit `requirements/base.in` or `requirements/dev.in`, then run:
+Dependencies are managed with
+[pip-tools](https://github.com/jazzband/pip-tools). Edit
+`requirements/base.in` or `requirements/dev.in`, then run:
 
 ```bash
 make upgrade    # recompile pinned requirements and install
 ```
 
-Do not edit `requirements/base.txt` or `requirements/dev.txt` directly — they are generated artifacts.
+Do not edit `requirements/base.txt` or `requirements/dev.txt` directly, they
+are generated artifacts.

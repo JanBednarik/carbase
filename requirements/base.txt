@@ -124,6 +124,7 @@ starlette==1.0.0
     # via fastapi
 typer==0.25.0
     # via
+    #   -r requirements/base.in
     #   fastapi-cli
     #   fastapi-cloud-cli
 typing-extensions==4.15.0
