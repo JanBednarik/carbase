@@ -11,6 +11,7 @@ from sqlmodel import Column, Field, SQLModel
 class Scope(str, enum.Enum):
     api_token_read = "api_token_read"
     api_token_write = "api_token_write"
+    brand_write = "brand_write"
 
 
 def _default_expires_at() -> Optional[date]:

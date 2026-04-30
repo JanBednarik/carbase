@@ -3,12 +3,15 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
+from app.auth import require_scope
 from app.database import get_session
+from app.models.api_token import ApiToken, Scope
 from app.models.brand import Brand, BrandCreate, BrandRead, BrandUpdate
 
 router = APIRouter(prefix="/brands", tags=["brands"])
 
 SessionDep = Annotated[Session, Depends(get_session)]
+BrandWriteDep = Annotated[ApiToken, Depends(require_scope(Scope.brand_write))]
 
 
 @router.get("/", response_model=list[BrandRead])
@@ -17,7 +20,7 @@ def list_brands(session: SessionDep, skip: int = 0, limit: int = 100):
 
 
 @router.post("/", response_model=BrandRead, status_code=201)
-def create_brand(brand: BrandCreate, session: SessionDep):
+def create_brand(brand: BrandCreate, session: SessionDep, _: BrandWriteDep):
     db_brand = Brand.model_validate(brand)
     session.add(db_brand)
     session.commit()
@@ -34,7 +37,9 @@ def get_brand(brand_id: int, session: SessionDep):
 
 
 @router.patch("/{brand_id}", response_model=BrandRead)
-def update_brand(brand_id: int, brand_update: BrandUpdate, session: SessionDep):
+def update_brand(
+    brand_id: int, brand_update: BrandUpdate, session: SessionDep, _: BrandWriteDep
+):
     brand = session.get(Brand, brand_id)
     if not brand:
         raise HTTPException(status_code=404, detail="Brand not found")
@@ -47,7 +52,7 @@ def update_brand(brand_id: int, brand_update: BrandUpdate, session: SessionDep):
 
 
 @router.delete("/{brand_id}", status_code=204)
-def delete_brand(brand_id: int, session: SessionDep):
+def delete_brand(brand_id: int, session: SessionDep, _: BrandWriteDep):
     brand = session.get(Brand, brand_id)
     if not brand:
         raise HTTPException(status_code=404, detail="Brand not found")
