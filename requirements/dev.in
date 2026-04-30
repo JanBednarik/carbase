@@ -3,6 +3,7 @@ pip-tools
 pre-commit
 pytest
 pytest-cov
+pytest-mock
 syrupy
 factory-boy
 httpx
