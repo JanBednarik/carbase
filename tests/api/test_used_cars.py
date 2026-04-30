@@ -2,12 +2,19 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 from syrupy.assertion import SnapshotAssertion
 
+from app.models.api_token import ApiToken, Scope
 from app.models.used_car import Fuel, Transmission, UsedCar
-from tests.factories import CarModelFactory, UsedCarFactory
+from tests.factories import ApiTokenFactory, CarModelFactory, UsedCarFactory
+
+
+def _auth(token: ApiToken) -> dict:
+    return {"Authorization": f"Bearer {token.token}"}
 
 
 def test_create_used_car(client: TestClient, session: Session):
+    auth = ApiTokenFactory(scopes=[Scope.used_car_write])
     car_model = CarModelFactory()
+
     response = client.post(
         "/cars/",
         json={
@@ -19,7 +26,9 @@ def test_create_used_car(client: TestClient, session: Session):
             "fuel": "Petrol",
             "transmission": "Manual",
         },
+        headers=_auth(auth),
     )
+
     assert response.status_code == 201
     used_car_id = response.json()["id"]
 
@@ -36,6 +45,8 @@ def test_create_used_car(client: TestClient, session: Session):
 
 
 def test_create_used_car__unknown_model(client: TestClient):
+    auth = ApiTokenFactory(scopes=[Scope.used_car_write])
+
     response = client.post(
         "/cars/",
         json={
@@ -47,8 +58,45 @@ def test_create_used_car__unknown_model(client: TestClient):
             "fuel": "Petrol",
             "transmission": "Manual",
         },
+        headers=_auth(auth),
     )
     assert response.status_code == 404
+
+
+def test_create_used_car__no_auth(client: TestClient):
+    car_model = CarModelFactory()
+    response = client.post(
+        "/cars/",
+        json={
+            "name": "2019 Toyota Corolla",
+            "car_model_id": car_model.id,
+            "year": 2019,
+            "price": 15000.0,
+            "km_driven": 50000,
+            "fuel": "Petrol",
+            "transmission": "Manual",
+        },
+    )
+    assert response.status_code == 401
+
+
+def test_create_used_car__insufficient_scope(client: TestClient):
+    auth = ApiTokenFactory(scopes=[Scope.api_token_read])
+    car_model = CarModelFactory()
+    response = client.post(
+        "/cars/",
+        json={
+            "name": "2019 Toyota Corolla",
+            "car_model_id": car_model.id,
+            "year": 2019,
+            "price": 15000.0,
+            "km_driven": 50000,
+            "fuel": "Petrol",
+            "transmission": "Manual",
+        },
+        headers=_auth(auth),
+    )
+    assert response.status_code == 403
 
 
 def test_list_used_cars(client: TestClient, snapshot_json: SnapshotAssertion):
@@ -129,6 +177,7 @@ def test_get_used_car__not_found(client: TestClient):
 def test_update_used_car(
     client: TestClient, session: Session, snapshot_json: SnapshotAssertion
 ):
+    auth = ApiTokenFactory(scopes=[Scope.used_car_write])
     used_car = UsedCarFactory(
         name="2019 Toyota Corolla",
         year=2019,
@@ -138,7 +187,9 @@ def test_update_used_car(
         transmission=Transmission.manual,
     )
 
-    response = client.patch(f"/cars/{used_car.id}", json={"price": 13500.0})
+    response = client.patch(
+        f"/cars/{used_car.id}", json={"price": 13500.0}, headers=_auth(auth)
+    )
     assert response.status_code == 200
     assert response.json() == snapshot_json
 
@@ -149,21 +200,40 @@ def test_update_used_car(
 
 
 def test_update_used_car__not_found(client: TestClient):
-    response = client.patch("/cars/999", json={"price": 13500.0})
+    auth = ApiTokenFactory(scopes=[Scope.used_car_write])
+    response = client.patch("/cars/999", json={"price": 13500.0}, headers=_auth(auth))
     assert response.status_code == 404
 
 
 def test_update_used_car__unknown_model(client: TestClient):
+    auth = ApiTokenFactory(scopes=[Scope.used_car_write])
     used_car = UsedCarFactory()
-
-    response = client.patch(f"/cars/{used_car.id}", json={"car_model_id": 999})
+    response = client.patch(
+        f"/cars/{used_car.id}", json={"car_model_id": 999}, headers=_auth(auth)
+    )
     assert response.status_code == 404
 
 
+def test_update_used_car__no_auth(client: TestClient):
+    used_car = UsedCarFactory()
+    response = client.patch(f"/cars/{used_car.id}", json={"price": 13500.0})
+    assert response.status_code == 401
+
+
+def test_update_used_car__insufficient_scope(client: TestClient):
+    auth = ApiTokenFactory(scopes=[Scope.api_token_read])
+    used_car = UsedCarFactory()
+    response = client.patch(
+        f"/cars/{used_car.id}", json={"price": 13500.0}, headers=_auth(auth)
+    )
+    assert response.status_code == 403
+
+
 def test_delete_used_car(client: TestClient, session: Session):
+    auth = ApiTokenFactory(scopes=[Scope.used_car_write])
     used_car = UsedCarFactory()
 
-    response = client.delete(f"/cars/{used_car.id}")
+    response = client.delete(f"/cars/{used_car.id}", headers=_auth(auth))
     assert response.status_code == 204
 
     session.expire_all()
@@ -171,5 +241,19 @@ def test_delete_used_car(client: TestClient, session: Session):
 
 
 def test_delete_used_car__not_found(client: TestClient):
-    response = client.delete("/cars/999")
+    auth = ApiTokenFactory(scopes=[Scope.used_car_write])
+    response = client.delete("/cars/999", headers=_auth(auth))
     assert response.status_code == 404
+
+
+def test_delete_used_car__no_auth(client: TestClient):
+    used_car = UsedCarFactory()
+    response = client.delete(f"/cars/{used_car.id}")
+    assert response.status_code == 401
+
+
+def test_delete_used_car__insufficient_scope(client: TestClient):
+    auth = ApiTokenFactory(scopes=[Scope.api_token_read])
+    used_car = UsedCarFactory()
+    response = client.delete(f"/cars/{used_car.id}", headers=_auth(auth))
+    assert response.status_code == 403

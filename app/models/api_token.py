@@ -13,6 +13,7 @@ class Scope(str, enum.Enum):
     api_token_write = "api_token_write"
     brand_write = "brand_write"
     car_model_write = "car_model_write"
+    used_car_write = "used_car_write"
 
 
 def _default_expires_at() -> Optional[date]:

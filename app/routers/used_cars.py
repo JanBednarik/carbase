@@ -3,13 +3,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
+from app.auth import require_scope
 from app.database import get_session
+from app.models.api_token import ApiToken, Scope
 from app.models.car_model import CarModel
 from app.models.used_car import UsedCar, UsedCarCreate, UsedCarRead, UsedCarUpdate
 
 router = APIRouter(prefix="/cars", tags=["cars"])
 
 SessionDep = Annotated[Session, Depends(get_session)]
+UsedCarWriteDep = Annotated[ApiToken, Depends(require_scope(Scope.used_car_write))]
 
 
 @router.get("/", response_model=list[UsedCarRead])
@@ -26,7 +29,7 @@ def list_used_cars(
 
 
 @router.post("/", response_model=UsedCarRead, status_code=201)
-def create_used_car(car: UsedCarCreate, session: SessionDep):
+def create_used_car(car: UsedCarCreate, session: SessionDep, _: UsedCarWriteDep):
     if not session.get(CarModel, car.car_model_id):
         raise HTTPException(status_code=404, detail="Car model not found")
     db_car = UsedCar.model_validate(car)
@@ -45,7 +48,9 @@ def get_used_car(car_id: int, session: SessionDep):
 
 
 @router.patch("/{car_id}", response_model=UsedCarRead)
-def update_used_car(car_id: int, car_update: UsedCarUpdate, session: SessionDep):
+def update_used_car(
+    car_id: int, car_update: UsedCarUpdate, session: SessionDep, _: UsedCarWriteDep
+):
     car = session.get(UsedCar, car_id)
     if not car:
         raise HTTPException(status_code=404, detail="Used car not found")
@@ -61,7 +66,7 @@ def update_used_car(car_id: int, car_update: UsedCarUpdate, session: SessionDep)
 
 
 @router.delete("/{car_id}", status_code=204)
-def delete_used_car(car_id: int, session: SessionDep):
+def delete_used_car(car_id: int, session: SessionDep, _: UsedCarWriteDep):
     car = session.get(UsedCar, car_id)
     if not car:
         raise HTTPException(status_code=404, detail="Used car not found")
